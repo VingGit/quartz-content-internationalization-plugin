@@ -4,6 +4,11 @@ Production-ready template for building, testing, and publishing Quartz community
 Quartz's native plugin patterns and uses a factory-function API similar to Astro integrations:
 plugins are created by functions that return objects with `name` and lifecycle hooks.
 
+
+
+
+
+
 ## Highlights
 
 - ✅ Quartz-compatible transformer/filter/emitter examples

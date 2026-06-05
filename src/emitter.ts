@@ -87,7 +87,7 @@ export const ContentI18nManifest: QuartzEmitterPlugin<Partial<ContentI18nOptions
     const manifest = buildManifest(ctx, content);
     const json = `${JSON.stringify(manifest, null, 2)}\n`;
     const out = await writeFile(ctx.argv.output, "static/locales.json", json);
-    const redirect = await emitRootRedirect(ctx, manifest);
+    const redirect = await emitRootRedirect(ctx, manifest, content);
     const outputs = [out];
     if (redirect) outputs.push(redirect);
     return outputs;
@@ -96,11 +96,16 @@ export const ContentI18nManifest: QuartzEmitterPlugin<Partial<ContentI18nOptions
   const emitRootRedirect = async (
     ctx: BuildCtx,
     manifest: LocaleManifest,
+    content: ProcessedContent[],
   ): Promise<FilePath | null> => {
-    // Skip if a root index.html will be emitted by another plugin (e.g. the
-    // user has a `content/index.md`). We detect this by checking the manifest
-    // for a base slug of "index".
-    if (manifest.pages["index"] !== undefined) return null;
+    // Skip only if there is an actual root-level index page (slug literally
+    // "index", no locale prefix). Localized index files (e.g. "fi-FI/index")
+    // mean the site root would otherwise 404, so the redirect is needed.
+    const hasRootIndex = content.some(
+      ([, vfile]) => ((vfile.data?.slug ?? "") as string) === "index",
+    );
+    if (hasRootIndex) return null;
+    if (manifest.locales.length === 0) return null;
     const html = buildRedirectHtml(manifest);
     return writeFile(ctx.argv.output, "index.html", html);
   };

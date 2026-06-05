@@ -249,13 +249,17 @@ var ContentI18nManifest = (userOptions) => {
     const json = `${JSON.stringify(manifest, null, 2)}
 `;
     const out = await writeFile(ctx.argv.output, "static/locales.json", json);
-    const redirect = await emitRootRedirect(ctx, manifest);
+    const redirect = await emitRootRedirect(ctx, manifest, content);
     const outputs = [out];
     if (redirect) outputs.push(redirect);
     return outputs;
   };
-  const emitRootRedirect = async (ctx, manifest) => {
-    if (manifest.pages["index"] !== void 0) return null;
+  const emitRootRedirect = async (ctx, manifest, content) => {
+    const hasRootIndex = content.some(
+      ([, vfile]) => (vfile.data?.slug ?? "") === "index"
+    );
+    if (hasRootIndex) return null;
+    if (manifest.locales.length === 0) return null;
     const html = buildRedirectHtml(manifest);
     return writeFile(ctx.argv.output, "index.html", html);
   };

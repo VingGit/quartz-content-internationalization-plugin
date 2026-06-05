@@ -95,6 +95,7 @@ export default defineConfig({
     index: "src/index.ts",
     types: "src/types.ts",
     "components/index": "src/components/index.ts",
+    cli: "src/cli.ts",
   },
   format: ["esm"],
   dts: true,

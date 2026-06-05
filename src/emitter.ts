@@ -5,87 +5,101 @@ import type {
   ProcessedContent,
   BuildCtx,
   FilePath,
-  FullSlug,
 } from "@quartz-community/types";
-import type { ExampleEmitterOptions } from "./types";
+import type { ContentI18nOptions } from "./types";
+import { buildLocaleList, extractLocalePrefix, stripLocalePrefix } from "./util/locales";
+import { setOptions } from "./util/state";
 
-const defaultOptions: ExampleEmitterOptions = {
-  manifestSlug: "plugin-manifest",
-  includeFrontmatter: true,
-  metadata: {
-    generator: "Quartz Plugin Template",
-  },
-};
+export interface LocaleManifest {
+  defaultLocale: string;
+  locales: string[];
+  rtlLocales: string[];
+  hideUnavailableLocales: boolean;
+  /** Map of base-slug (without locale prefix) → list of locales available for it. */
+  pages: Record<string, string[]>;
+}
 
-const joinSegments = (...segments: string[]) =>
-  segments
-    .filter((segment) => segment.length > 0)
-    .join("/")
-    .replace(/\/+/g, "/") as FilePath;
-
-const writeFile = async (
-  outputDir: string,
-  slug: FullSlug,
-  ext: `.${string}` | "",
-  content: string,
-) => {
-  const outputPath = joinSegments(outputDir, `${slug}${ext}`) as FilePath;
+const writeFile = async (outputDir: string, relative: string, content: string): Promise<FilePath> => {
+  const outputPath = path.join(outputDir, relative);
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, content);
-  return outputPath;
+  return outputPath.replace(/\\/g, "/") as FilePath;
 };
 
 /**
- * Example emitter that writes a JSON manifest of content metadata.
+ * Emitter that builds `static/locales.json` describing per-page translation
+ * availability. The locale-switcher client script consumes this manifest.
  */
-export const ExampleEmitter: QuartzEmitterPlugin<Partial<ExampleEmitterOptions>> = (
-  userOptions?: Partial<ExampleEmitterOptions>,
+export const ContentI18nManifest: QuartzEmitterPlugin<Partial<ContentI18nOptions>> = (
+  userOptions?: Partial<ContentI18nOptions>,
 ) => {
-  const options = { ...defaultOptions, ...userOptions };
-  const emitManifest = async (ctx: BuildCtx, content: ProcessedContent[]) => {
-    const manifest = {
-      ...options.metadata,
-      generatedAt: new Date().toISOString(),
-      pages: content.map(([_tree, vfile]) => {
-        const frontmatter = (vfile.data?.frontmatter ?? {}) as {
-          title?: string;
-          tags?: string[];
-          [key: string]: unknown;
-        };
-        return {
-          slug: vfile.data?.slug ?? null,
-          title: frontmatter.title ?? null,
-          tags: frontmatter.tags ?? null,
-          filePath: vfile.data?.filePath ?? null,
-          frontmatter: options.includeFrontmatter ? frontmatter : undefined,
-        };
-      }),
-    };
+  const options = setOptions(userOptions);
 
-    let json = `${JSON.stringify(manifest, null, 2)}\n`;
-    if (options.transformManifest) {
-      json = options.transformManifest(json);
+  const buildManifest = (ctx: BuildCtx, content: ProcessedContent[]): LocaleManifest => {
+    const defaultLocale = ctx.cfg?.configuration?.locale ?? "en-US";
+    const locales = buildLocaleList(defaultLocale, options.locales);
+    const rtlLocales = options.rtlLocales
+      .map((l) => {
+        try {
+          return buildLocaleList(defaultLocale, [l]).at(-1) ?? null;
+        } catch {
+          return null;
+        }
+      })
+      .filter((l): l is string => l !== null);
+
+    const pages: Record<string, Set<string>> = {};
+    for (const [, vfile] of content) {
+      const slug = (vfile.data?.slug ?? "") as string;
+      if (!slug) continue;
+      const locale = extractLocalePrefix(slug, locales);
+      if (!locale) continue;
+      const baseSlug = stripLocalePrefix(slug, locales);
+      if (!pages[baseSlug]) pages[baseSlug] = new Set();
+      pages[baseSlug].add(locale);
+
+      vfile.data.availableLocales = Array.from(pages[baseSlug]);
     }
 
-    const output = await writeFile(
-      ctx.argv.output,
-      options.manifestSlug as FullSlug,
-      ".json",
-      json,
-    );
-    return [output];
+    // Second pass so every page sees the complete availability list.
+    for (const [, vfile] of content) {
+      const slug = (vfile.data?.slug ?? "") as string;
+      const baseSlug = stripLocalePrefix(slug, locales);
+      const avail = pages[baseSlug];
+      if (avail) vfile.data.availableLocales = Array.from(avail).sort();
+    }
+
+    const serializedPages: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(pages)) {
+      serializedPages[k] = Array.from(v).sort();
+    }
+
+    return {
+      defaultLocale,
+      locales,
+      rtlLocales,
+      hideUnavailableLocales: options.hideUnavailableLocales,
+      pages: serializedPages,
+    };
+  };
+
+  const emitManifest = async (ctx: BuildCtx, content: ProcessedContent[]): Promise<FilePath[]> => {
+    const manifest = buildManifest(ctx, content);
+    const json = `${JSON.stringify(manifest, null, 2)}\n`;
+    const out = await writeFile(ctx.argv.output, "static/locales.json", json);
+    return [out];
   };
 
   return {
-    name: "ExampleEmitter",
+    name: "ContentI18nManifest",
+    getQuartzComponents() {
+      return [];
+    },
     async emit(ctx, content, _resources) {
       return emitManifest(ctx, content);
     },
-    async *partialEmit(ctx, content, _resources, _changeEvents) {
-      const outputPaths = await emitManifest(ctx, content);
-      for (const outputPath of outputPaths) {
-        yield outputPath;
-      }
+    async *partialEmit(ctx, content, _resources, _changes) {
+      for (const fp of await emitManifest(ctx, content)) yield fp;
     },
   };
 };

@@ -1,7 +1,26 @@
 export default {
-  components: {
-    example: {
-      title: "Example",
-    },
+  localeSwitcher: {
+    label: "Language",
+    title: "Change language",
+    unavailable: "(not yet translated)",
+    localeNames: {
+      "en-US": "English (US)",
+      "en-CA": "English (Canada)",
+      "en-GB": "English (UK)",
+      "fi-FI": "Suomi",
+      "sv-SE": "Svenska",
+      "de-DE": "Deutsch",
+      "de-CH": "Deutsch (Schweiz)",
+      "de-AT": "Deutsch (Österreich)",
+      "fr-FR": "Français",
+      "fr-CA": "Français (Canada)",
+      "es-ES": "Español",
+      "ga-IE": "Gaeilge",
+      "ar-SA": "العربية",
+      "he-IL": "עברית",
+      "ja-JP": "日本語",
+      "zh-CN": "中文 (简体)",
+      "zh-TW": "中文 (繁體)",
+    } as Record<string, string>,
   },
 };

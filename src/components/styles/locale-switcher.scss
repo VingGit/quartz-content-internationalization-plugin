@@ -1,0 +1,66 @@
+.locale-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.2rem 0;
+
+  &__label {
+    font-size: 0.75rem;
+    color: var(--darkgray);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__select {
+    flex: 1;
+    min-width: 0;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 4px;
+    background: var(--light);
+    color: var(--darkgray);
+    font-family: var(--bodyFont);
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--secondary);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 2px rgba(40, 75, 99, 0.15);
+    }
+
+    option:disabled {
+      color: var(--gray);
+      font-style: italic;
+    }
+  }
+
+  &--loading &__select {
+    opacity: 0.6;
+  }
+
+  &--error {
+    display: none;
+  }
+}
+
+/**
+ * RTL sidebar swap: when the bootstrap script marks the document as RTL,
+ * swap the order of the grid columns in the default page frame so the
+ * "right" sidebar becomes visually the left one and vice versa.
+ */
+html[data-locale-rtl="true"] {
+  #quartz-body {
+    direction: rtl;
+  }
+  // Keep content text reading direction respecting OS locale; opt-in classes
+  // can still override per-section.
+  .page > #quartz-body > .left,
+  .page > #quartz-body > .right {
+    direction: rtl;
+  }
+}

@@ -1,3 +1,37 @@
+/**
+ * Public type surface for the content-internationalization plugin.
+ */
+
+export interface ContentI18nOptions {
+  /**
+   * BCP-47 locale codes for which to maintain translations. The site's
+   * `configuration.locale` is always added implicitly as the default locale.
+   * Accepts both `de-DE` and `de_DE` forms; normalized to dashed form.
+   */
+  locales: string[];
+
+  /**
+   * Locales (BCP-47) that read right-to-left. Pages whose locale matches will
+   * render with `dir="rtl"` and a swapped sidebar layout.
+   */
+  rtlLocales: string[];
+
+  /**
+   * When `true`, translations not yet present for the current page are removed
+   * from the switcher. When `false` (default), they are shown but disabled.
+   */
+  hideUnavailableLocales: boolean;
+
+  /** Layout position for the switcher component. */
+  position: "left" | "right" | "header" | "beforeBody";
+
+  /** Layout priority within the chosen position. */
+  priority: number;
+
+  /** Optional layout group (e.g. `"toolbar"`). */
+  group?: string;
+}
+
 export type {
   BuildCtx,
   ChangeEvent,
@@ -6,57 +40,15 @@ export type {
   ProcessedContent,
   QuartzEmitterPlugin,
   QuartzEmitterPluginInstance,
-  QuartzFilterPlugin,
-  QuartzFilterPluginInstance,
-  QuartzPluginData,
   QuartzTransformerPlugin,
   QuartzTransformerPluginInstance,
   StaticResources,
-  PageMatcher,
-  PageGenerator,
-  VirtualPage,
-  QuartzPageTypePlugin,
-  QuartzPageTypePluginInstance,
+  QuartzPluginData,
+  QuartzComponent,
+  QuartzComponentProps,
+  QuartzComponentConstructor,
+  FullSlug,
+  FilePath,
+  GlobalConfiguration,
+  QuartzConfig,
 } from "@quartz-community/types";
-
-export interface ExampleTransformerOptions {
-  /** Token used to highlight text, defaults to ==highlight== */
-  highlightToken: string;
-  /** Add a CSS class to all headings in the rendered HTML. */
-  headingClass: string;
-  /** Enable remark-gfm for tables/task lists. */
-  enableGfm: boolean;
-  /** Enable adding slug IDs to headings. */
-  addHeadingSlugs: boolean;
-}
-
-export interface ExampleFilterOptions {
-  /** Allow pages marked draft: true to publish. */
-  allowDrafts: boolean;
-  /** Exclude pages that contain any of these frontmatter tags. */
-  excludeTags: string[];
-  /** Exclude paths that start with any of these prefixes (relative to content root). */
-  excludePathPrefixes: string[];
-}
-
-export interface ExampleEmitterOptions {
-  /** Filename to emit at the site root. */
-  manifestSlug: string;
-  /** Whether to include the frontmatter block in the manifest. */
-  includeFrontmatter: boolean;
-  /** Extra metadata to write at the top level of the manifest. */
-  metadata: Record<string, unknown>;
-  /** Optional hook to transform the emitted manifest JSON string. */
-  transformManifest?: (json: string) => string;
-  /** Add a custom class to the emitted manifest <script> tag if used in HTML. */
-  manifestScriptClass?: string;
-}
-
-export interface ExampleComponentOptions {
-  /** Text to prefix before the title */
-  prefix?: string;
-  /** Text to suffix after the title */
-  suffix?: string;
-  /** CSS class name to apply */
-  className?: string;
-}

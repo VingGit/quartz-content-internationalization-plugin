@@ -1,19 +1,24 @@
 .locale-switcher {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
-  margin: 0.2rem 0;
+  margin: 0.4rem 0;
+  width: 100%;
+  box-sizing: border-box;
 
   &__label {
     font-size: 0.75rem;
     color: var(--darkgray);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    flex: 0 0 auto;
   }
 
   &__select {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    max-width: 100%;
     padding: 0.25rem 0.5rem;
     border: 1px solid var(--lightgray);
     border-radius: 4px;

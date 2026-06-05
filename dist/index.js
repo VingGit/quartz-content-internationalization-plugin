@@ -249,7 +249,15 @@ var ContentI18nManifest = (userOptions) => {
     const json = `${JSON.stringify(manifest, null, 2)}
 `;
     const out = await writeFile(ctx.argv.output, "static/locales.json", json);
-    return [out];
+    const redirect = await emitRootRedirect(ctx, manifest);
+    const outputs = [out];
+    if (redirect) outputs.push(redirect);
+    return outputs;
+  };
+  const emitRootRedirect = async (ctx, manifest) => {
+    if (manifest.pages["index"] !== void 0) return null;
+    const html = buildRedirectHtml(manifest);
+    return writeFile(ctx.argv.output, "index.html", html);
   };
   return {
     name: "ContentI18nManifest",
@@ -264,6 +272,48 @@ var ContentI18nManifest = (userOptions) => {
     }
   };
 };
+function buildRedirectHtml(manifest) {
+  const locales2 = JSON.stringify(manifest.locales);
+  const def = JSON.stringify(manifest.defaultLocale);
+  const fallback = `${manifest.defaultLocale}/`;
+  return `<!doctype html>
+<html lang="${manifest.defaultLocale}">
+<head>
+<meta charset="utf-8">
+<title>Redirecting\u2026</title>
+<meta name="robots" content="noindex">
+<meta name="generator" content="quartz-content-internationalization">
+<script>
+(function () {
+  var locales = ${locales2};
+  var def = ${def};
+  function pick() {
+    var prefs = (navigator.languages || [navigator.language || ""]).map(function (s) { return String(s).toLowerCase(); });
+    for (var i = 0; i < prefs.length; i++) {
+      for (var j = 0; j < locales.length; j++) {
+        if (locales[j].toLowerCase() === prefs[i]) return locales[j];
+      }
+    }
+    for (var i = 0; i < prefs.length; i++) {
+      var lang = prefs[i].split("-")[0];
+      for (var j = 0; j < locales.length; j++) {
+        if (locales[j].toLowerCase().split("-")[0] === lang) return locales[j];
+      }
+    }
+    return def;
+  }
+  location.replace(pick() + "/");
+})();
+</script>
+<meta http-equiv="refresh" content="0;url=${fallback}">
+<link rel="canonical" href="${fallback}">
+</head>
+<body>
+<p>Redirecting to <a href="${fallback}">${fallback}</a>\u2026</p>
+</body>
+</html>
+`;
+}
 
 // node_modules/@quartz-community/utils/dist/lang.js
 function classNames(...classes) {

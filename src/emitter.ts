@@ -87,7 +87,22 @@ export const ContentI18nManifest: QuartzEmitterPlugin<Partial<ContentI18nOptions
     const manifest = buildManifest(ctx, content);
     const json = `${JSON.stringify(manifest, null, 2)}\n`;
     const out = await writeFile(ctx.argv.output, "static/locales.json", json);
-    return [out];
+    const redirect = await emitRootRedirect(ctx, manifest);
+    const outputs = [out];
+    if (redirect) outputs.push(redirect);
+    return outputs;
+  };
+
+  const emitRootRedirect = async (
+    ctx: BuildCtx,
+    manifest: LocaleManifest,
+  ): Promise<FilePath | null> => {
+    // Skip if a root index.html will be emitted by another plugin (e.g. the
+    // user has a `content/index.md`). We detect this by checking the manifest
+    // for a base slug of "index".
+    if (manifest.pages["index"] !== undefined) return null;
+    const html = buildRedirectHtml(manifest);
+    return writeFile(ctx.argv.output, "index.html", html);
   };
 
   return {
@@ -103,3 +118,54 @@ export const ContentI18nManifest: QuartzEmitterPlugin<Partial<ContentI18nOptions
     },
   };
 };
+
+/**
+ * Build the static HTML for the site root (`/index.html`). It picks the
+ * visitor's preferred locale from `navigator.languages`, falling back to the
+ * default. Includes a no-JS meta-refresh fallback. All targets are written as
+ * relative URLs so the page works under subpath hosting (e.g. GitLab Pages).
+ */
+export function buildRedirectHtml(manifest: LocaleManifest): string {
+  const locales = JSON.stringify(manifest.locales);
+  const def = JSON.stringify(manifest.defaultLocale);
+  // The relative path from `/index.html` to `/<defaultLocale>/` is simply
+  // `<defaultLocale>/` (no leading slash).
+  const fallback = `${manifest.defaultLocale}/`;
+  return `<!doctype html>
+<html lang="${manifest.defaultLocale}">
+<head>
+<meta charset="utf-8">
+<title>Redirecting…</title>
+<meta name="robots" content="noindex">
+<meta name="generator" content="quartz-content-internationalization">
+<script>
+(function () {
+  var locales = ${locales};
+  var def = ${def};
+  function pick() {
+    var prefs = (navigator.languages || [navigator.language || ""]).map(function (s) { return String(s).toLowerCase(); });
+    for (var i = 0; i < prefs.length; i++) {
+      for (var j = 0; j < locales.length; j++) {
+        if (locales[j].toLowerCase() === prefs[i]) return locales[j];
+      }
+    }
+    for (var i = 0; i < prefs.length; i++) {
+      var lang = prefs[i].split("-")[0];
+      for (var j = 0; j < locales.length; j++) {
+        if (locales[j].toLowerCase().split("-")[0] === lang) return locales[j];
+      }
+    }
+    return def;
+  }
+  location.replace(pick() + "/");
+})();
+</script>
+<meta http-equiv="refresh" content="0;url=${fallback}">
+<link rel="canonical" href="${fallback}">
+</head>
+<body>
+<p>Redirecting to <a href="${fallback}">${fallback}</a>…</p>
+</body>
+</html>
+`;
+}

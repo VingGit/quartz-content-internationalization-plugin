@@ -12,9 +12,6 @@ const DEFAULTS: ContentI18nOptions = {
   locales: [],
   rtlLocales: [],
   hideUnavailableLocales: false,
-  position: "left",
-  priority: 5,
-  group: "toolbar",
 };
 
 let current: ContentI18nOptions = { ...DEFAULTS };

@@ -20,12 +20,6 @@ interface ContentI18nOptions {
      * from the switcher. When `false` (default), they are shown but disabled.
      */
     hideUnavailableLocales: boolean;
-    /** Layout position for the switcher component. */
-    position: "left" | "right" | "header" | "beforeBody";
-    /** Layout priority within the chosen position. */
-    priority: number;
-    /** Optional layout group (e.g. `"toolbar"`). */
-    group?: string;
 }
 
 export type { ContentI18nOptions };

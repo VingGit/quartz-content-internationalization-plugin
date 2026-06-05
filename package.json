@@ -100,10 +100,7 @@
     "defaultOptions": {
       "locales": [],
       "rtlLocales": [],
-      "hideUnavailableLocales": false,
-      "position": "left",
-      "priority": 5,
-      "group": "toolbar"
+      "hideUnavailableLocales": false
     },
     "optionSchema": {
       "locales": {
@@ -122,7 +119,8 @@
       "LocaleSwitcher": {
         "displayName": "Locale Switcher",
         "defaultPosition": "left",
-        "defaultPriority": 5
+        "defaultPriority": 25,
+        "defaultGroup": "toolbar"
       }
     }
   },

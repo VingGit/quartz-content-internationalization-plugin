@@ -8,10 +8,7 @@ createRequire(import.meta.url);
 var DEFAULTS = {
   locales: [],
   rtlLocales: [],
-  hideUnavailableLocales: false,
-  position: "left",
-  priority: 5,
-  group: "toolbar"
+  hideUnavailableLocales: false
 };
 var current = { ...DEFAULTS };
 function setOptions(opts) {
@@ -400,7 +397,17 @@ var LocaleSwitcher = ({ displayClass, cfg }) => {
 };
 LocaleSwitcher.css = locale_switcher_default;
 LocaleSwitcher.afterDOMLoaded = locale_switcher_inline_default;
-var LocaleSwitcher_default = (() => LocaleSwitcher);
+var LocaleSwitcher_default = ((opts) => {
+  if (opts) {
+    const seed = {
+      locales: Array.isArray(opts.locales) ? opts.locales : void 0,
+      rtlLocales: Array.isArray(opts.rtlLocales) ? opts.rtlLocales : void 0,
+      hideUnavailableLocales: typeof opts.hideUnavailableLocales === "boolean" ? opts.hideUnavailableLocales : void 0
+    };
+    setOptions(seed);
+  }
+  return LocaleSwitcher;
+});
 var DOTFILE = /^\./;
 async function pathExists(p2) {
   try {
@@ -531,10 +538,7 @@ function init(options) {
   const opts = {
     locales: Array.isArray(options.locales) ? options.locales : void 0,
     rtlLocales: Array.isArray(options.rtlLocales) ? options.rtlLocales : void 0,
-    hideUnavailableLocales: typeof options.hideUnavailableLocales === "boolean" ? options.hideUnavailableLocales : void 0,
-    position: typeof options.position === "string" ? options.position : void 0,
-    priority: typeof options.priority === "number" ? options.priority : void 0,
-    group: typeof options.group === "string" ? options.group : void 0
+    hideUnavailableLocales: typeof options.hideUnavailableLocales === "boolean" ? options.hideUnavailableLocales : void 0
   };
   setOptions(opts);
 }

@@ -5,8 +5,9 @@ import type {
 } from "@quartz-community/types";
 import { classNames } from "../util/lang";
 import { i18n, localeDisplayName } from "../i18n";
-import { getOptions } from "../util/state";
+import { getOptions, setOptions } from "../util/state";
 import { buildLocaleList } from "../util/locales";
+import type { ContentI18nOptions } from "../types";
 import style from "./styles/locale-switcher.scss";
 // @ts-expect-error - inline script import handled by Quartz bundler
 import script from "./scripts/locale-switcher.inline.ts";
@@ -42,4 +43,21 @@ const LocaleSwitcher: QuartzComponent = ({ displayClass, cfg }: QuartzComponentP
 LocaleSwitcher.css = style;
 LocaleSwitcher.afterDOMLoaded = script;
 
-export default (() => LocaleSwitcher) satisfies QuartzComponentConstructor;
+// The component bundle has its own copy of `util/state` (tsup doesn't share
+// modules across entry points), so options set by the transformer in
+// `dist/index.js` are invisible here. Seed this bundle's singleton from the
+// YAML options that Quartz forwards through the constructor.
+export default ((opts?: Record<string, unknown>) => {
+  if (opts) {
+    const seed: Partial<ContentI18nOptions> = {
+      locales: Array.isArray(opts.locales) ? (opts.locales as string[]) : undefined,
+      rtlLocales: Array.isArray(opts.rtlLocales) ? (opts.rtlLocales as string[]) : undefined,
+      hideUnavailableLocales:
+        typeof opts.hideUnavailableLocales === "boolean"
+          ? opts.hideUnavailableLocales
+          : undefined,
+    };
+    setOptions(seed);
+  }
+  return LocaleSwitcher;
+}) satisfies QuartzComponentConstructor;

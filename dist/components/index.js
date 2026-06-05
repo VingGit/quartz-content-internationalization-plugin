@@ -58,12 +58,22 @@ function localeDisplayName(tag, uiLocale) {
 var DEFAULTS = {
   locales: [],
   rtlLocales: [],
-  hideUnavailableLocales: false,
-  position: "left",
-  priority: 5,
-  group: "toolbar"
+  hideUnavailableLocales: false
 };
 var current = { ...DEFAULTS };
+function setOptions(opts) {
+  if (!opts) {
+    return current;
+  }
+  current = {
+    ...DEFAULTS,
+    ...current,
+    ...opts,
+    locales: opts.locales ?? current.locales,
+    rtlLocales: opts.rtlLocales ?? current.rtlLocales
+  };
+  return current;
+}
 function getOptions() {
   return current;
 }
@@ -160,7 +170,17 @@ var LocaleSwitcher = ({ displayClass, cfg }) => {
 };
 LocaleSwitcher.css = locale_switcher_default;
 LocaleSwitcher.afterDOMLoaded = locale_switcher_inline_default;
-var LocaleSwitcher_default = (() => LocaleSwitcher);
+var LocaleSwitcher_default = ((opts) => {
+  if (opts) {
+    const seed = {
+      locales: Array.isArray(opts.locales) ? opts.locales : void 0,
+      rtlLocales: Array.isArray(opts.rtlLocales) ? opts.rtlLocales : void 0,
+      hideUnavailableLocales: typeof opts.hideUnavailableLocales === "boolean" ? opts.hideUnavailableLocales : void 0
+    };
+    setOptions(seed);
+  }
+  return LocaleSwitcher;
+});
 
 export { LocaleSwitcher_default as LocaleSwitcher };
 //# sourceMappingURL=index.js.map

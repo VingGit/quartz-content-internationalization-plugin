@@ -44,12 +44,6 @@ export function init(options?: Record<string, unknown>): void {
       typeof options.hideUnavailableLocales === "boolean"
         ? options.hideUnavailableLocales
         : undefined,
-    position:
-      typeof options.position === "string"
-        ? (options.position as ContentI18nOptions["position"])
-        : undefined,
-    priority: typeof options.priority === "number" ? options.priority : undefined,
-    group: typeof options.group === "string" ? options.group : undefined,
   };
   setOptions(opts);
 }

@@ -10,3 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial Quartz community plugin template.
+
+### Fixed
+
+- LocaleSwitcher now seeds its own bundle's options singleton from the
+  constructor arg. tsup bundles `util/state.ts` into every entry point, so
+  options set by the transformer in `dist/index.js` were invisible to the
+  component in `dist/components/index.js`, making `buildLocaleList` see only
+  the default locale and the switcher render `null`.
